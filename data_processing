@@ -1,0 +1,59 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+import numpy as np
+import math
+
+data = pd.read_csv('SK_002.SK.csv')
+#print(data[' gps_alt'])
+#print(data)
+
+#data = data.set_index['sys_time']
+data = data[(data['sys_time'] > 1.2e6) & (data['sys_time'] < 1.5e6)]
+
+# Rounding results for altitude and calculating vertical velocity
+data['gps_alt(corr)'] = data[' gps_alt'].rolling(window=1000, center=True).mean()
+plt.figure(0)
+ax2 =data.plot(kind='line',x='sys_time',y=' gps_alt')
+data.plot(kind='line',x='sys_time',y='gps_alt(corr)',ax=ax2)
+data['vertical_speed'] = data['gps_alt(corr)'].diff()/5e-3
+data['vertical_speed'] = data['vertical_speed'].rolling(window=1000, center=True).mean()
+
+
+# Not corrected velocity
+data['vertical_speed(no_correction)'] = data[' gps_alt'].diff()/5e-3
+#plt.figure(2)
+#data.plot(kind='line',x='sys_time',y='vertical_speed(no_correction)')
+
+# Rounding and horizontal velocity calculation
+data['gps_lon(corr)'] = data[' gps_lon'].rolling(window=500, center=True).mean()/1e7
+data['gps_lat(corr)'] = data[' gps_lat'].rolling(window=500, center=True).mean()/1e7
+data['gps_lon(corr)'] = data['gps_lon(corr)']*math.pi/180.
+data['gps_lat(corr)'] = data['gps_lat(corr)']*math.pi/180.
+data2 = data.iloc[1:]
+
+data2.index = range(0,len(data2))
+data.index = range(0,len(data))
+
+data['distance_horiz'] = (2.*np.arcsin(((np.sin((data['gps_lat(corr)']-data2['gps_lat(corr)'])/2.))**2. + 
+	np.cos(data['gps_lat(corr)'])*np.cos(data2['gps_lat(corr)'])*(np.sin((data['gps_lon(corr)']-data2['gps_lon(corr)'])/2.))**2.)**(0.5)))*180.*60.*1852./math.pi
+	
+data['velocity_horizontal[m/s]'] = data['distance_horiz']/5e-3
+data['velocity_horizontal[m/s]'] = data['velocity_horizontal[m/s]'].rolling(window=100, center=True).mean()
+	
+
+plt.figure(1)
+ax = data.plot(kind='line',x='sys_time',y='vertical_speed')
+data.plot(kind='line',x='sys_time',y='velocity_horizontal[m/s]', ax = ax)
+
+plt.figure(2)
+ax = data.plot(kind='line',x='sys_time',y=' gps_velocity[m/s]')
+data.plot(kind='line',x='sys_time',y='velocity_horizontal[m/s]', ax = ax)
+
+
+#plt.figure(4)
+#ax3 = data.plot(kind='line',x='sys_time',y='gps_lon(corr)')
+#data.plot(kind='line',x='sys_time',y='gps_lat(corr)')
+
+
+
+plt.show()
