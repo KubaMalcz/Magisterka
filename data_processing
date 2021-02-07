@@ -8,13 +8,19 @@ data = pd.read_csv('SK_002.SK.csv')
 #print(data)
 
 #data = data.set_index['sys_time']
-data = data[(data['sys_time'] > 1.2e6) & (data['sys_time'] < 1.5e6)]
-
+data = data[(data['sys_time'] > 1.23e6) & (data['sys_time'] < 1.465e6)]
+data['sys_time'] = (data['sys_time'] - 1.2e6) / 1000.
 # Rounding results for altitude and calculating vertical velocity
 data['gps_alt(corr)'] = data[' gps_alt'].rolling(window=1000, center=True).mean()
+
 plt.figure(0)
-ax2 =data.plot(kind='line',x='sys_time',y=' gps_alt')
-data.plot(kind='line',x='sys_time',y='gps_alt(corr)',ax=ax2)
+axa1 =data.plot(kind='line',x='sys_time',y=' gps_alt')
+axa2 = data.plot(kind='line',x='sys_time',y='gps_alt(corr)',ax=axa1)
+axa2.set_xlabel('Time [seconds]')
+axa2.set_ylabel('Altitude [meters]')
+axa2.plot()
+plt.savefig('Altitude.png')
+
 data['vertical_speed'] = data['gps_alt(corr)'].diff()/5e-3
 data['vertical_speed'] = data['vertical_speed'].rolling(window=1000, center=True).mean()
 
@@ -42,17 +48,85 @@ data['velocity_horizontal[m/s]'] = data['velocity_horizontal[m/s]'].rolling(wind
 	
 
 plt.figure(1)
-ax = data.plot(kind='line',x='sys_time',y='vertical_speed')
-data.plot(kind='line',x='sys_time',y='velocity_horizontal[m/s]', ax = ax)
+axv = data.plot(kind='line',x='sys_time',y='vertical_speed')
+axhv = data.plot(kind='line',x='sys_time',y='velocity_horizontal[m/s]', ax = axv)
+axhv.set_xlabel('Time [seconds]')
+axhv.set_ylabel('Horizontal/Vertical Speed [m/s]')
+axhv.annotate('Wyjście z samolotu', xy=(48.5,5),  xycoords='data',
+            xytext=(48.5+90,5-8), textcoords='data',
+            arrowprops=dict(facecolor='black'),
+            horizontalalignment='right', verticalalignment='bottom',
+            )
+axhv.annotate('Otwarcie spadochronu', xy=(112,-49),  xycoords='data',
+            xytext=(110+110,-55+20), textcoords='data',
+            arrowprops=dict(facecolor='black'),
+            horizontalalignment='right', verticalalignment='top',
+            )
+axhv.annotate('Lądowanie', xy=(251,1),  xycoords='data',
+            xytext=(250-60,0+8), textcoords='data',
+            arrowprops=dict(facecolor='black'),
+            horizontalalignment='left', verticalalignment='top',
+            )
+#axhv.arrow("Wyjście z samolotu", 48.5,7,20,5,length_includes_head=True,
+#          head_width=8, head_length=6)
+axhv.plot()
+plt.savefig('ver_hor_speed.png')
+
 
 plt.figure(2)
-ax = data.plot(kind='line',x='sys_time',y=' gps_velocity[m/s]')
-data.plot(kind='line',x='sys_time',y='velocity_horizontal[m/s]', ax = ax)
+axh1 = data.plot(kind='line',x='sys_time',y=' gps_velocity[m/s]')
+#ax.set_title("Skydiver's altitude")
+axh2 = data.plot(kind='line',x='sys_time',y='velocity_horizontal[m/s]', ax = axh1)
+axh2.set_xlabel('Time [seconds]')
+axh2.set_ylabel('Horizontal speed [m/s]')
+axh2.plot()
+plt.savefig('velocity_horizontal.png')
 
+
+# Calculatin Cl/Cd ratio
+data['Cl/Cd_ratio']=-data['velocity_horizontal[m/s]']/data['vertical_speed']
+#data['Cl/Cd_ratio']=data['Cl/Cd_ratio'].rolling(window=100, center=True).mean()
+plt.figure(4)
+ax3=data.plot(kind='line',x='sys_time',y='Cl/Cd_ratio')
+ax3.set_ylim([0,3])
+ax3.plot()
 
 #plt.figure(4)
 #ax3 = data.plot(kind='line',x='sys_time',y='gps_lon(corr)')
 #data.plot(kind='line',x='sys_time',y='gps_lat(corr)')
+
+
+#-------------------------------------------------------
+#--------Calculation based on inertial sensor-----------
+#-------------------------------------------------------
+if 1==0:
+
+	dt=5e-3
+	xAngle = 0.
+	yAngle = 0.
+	zAngle = 0.
+	data[' gyro_x[mdps]'] = data[' gyro_x[mdps]']*np.pi/180.
+	data[' gyro_y[mdps]'] = data[' gyro_y[mdps]']*np.pi/180.
+	data[' gyro_z[mdps]'] = data[' gyro_z[mdps]']*np.pi/180.
+	i=1
+	for index, row in data.iterrows():
+		row['x_angle[deg]'] = dt*(1 * data[' gyro_x[mdps]'] + np.sin(xAngle)*np.tan(yAngle)*data[' gyro_y[mdps]']  + np.cos(xAngle)*np.tan(yAngle)*data[' gyro_z[mdps]'])+xAngle
+		row['y_angle[deg]'] = dt*(np.cos(xAngle)*data[' gyro_y[mdps]'] - np.sin(xAngle)*data[' gyro_z[mdps]'])+yAngle   
+		row['z_angle[deg]'] = dt*(np.sin(xAngle)/np.cos(yAngle)*data[' gyro_y[mdps]']+np.cos(xAngle)/np.cos(yAngle)*data[' gyro_z[mdps]'])+zAngle
+		if i%1000==0:
+			print(i/len(data)*100)
+		i=i+1
+		xAngle = row['x_angle[deg]']
+		yAngle = row['y_angle[deg]']
+		zAngle = row['z_angle[deg]']
+		
+	data['x_angle[deg]']=data['x_angle[deg]']/np.pi*180.
+	data['y_angle[deg]']=data['y_angle[deg]']/np.pi*180.
+	data['z_angle[deg]']=data['z_angle[deg]']/np.pi*180.
+	plt.figure(5)
+	ax4 = data.plot(kind='line',x='sys_time',y='x_angle[deg]')
+	ax5 = data.plot(kind='line',x='sys_time',y='y_angle[deg]', ax=ax4)
+	data.plot(kind='line',x='sys_time',y='z_angle[deg]', ax=ax5)	
 
 
 
