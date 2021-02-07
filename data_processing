@@ -88,8 +88,19 @@ data['Cl/Cd_ratio']=-data['velocity_horizontal[m/s]']/data['vertical_speed']
 #data['Cl/Cd_ratio']=data['Cl/Cd_ratio'].rolling(window=100, center=True).mean()
 plt.figure(4)
 ax3=data.plot(kind='line',x='sys_time',y='Cl/Cd_ratio')
+ax3.set_xlabel('Time [seconds]')
+ax3.set_ylabel('Cl/Cd')
 ax3.set_ylim([0,3])
 ax3.plot()
+
+# Calculatin Cl/Cd ratio
+#data['Cl/Cd_ratio']=data['Cl/Cd_ratio'].rolling(window=100, center=True).mean()
+plt.figure(5)
+#ax.set_title("Skydiver's altitude")
+axhva2 = data.plot(kind='line',x='gps_alt(corr)',y='vertical_speed')
+axhva2.set_xlabel('Altitude [meters]')
+axhva2.set_ylabel('Vertical speed [m/s]')
+axhva2.plot()
 
 #plt.figure(4)
 #ax3 = data.plot(kind='line',x='sys_time',y='gps_lon(corr)')
