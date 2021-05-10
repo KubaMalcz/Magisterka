@@ -47,23 +47,24 @@ data['velocity_horizontal[m/s]'] = data['distance_horiz']/5e-3
 data['velocity_horizontal[m/s]'] = data['velocity_horizontal[m/s]'].rolling(window=100, center=True).mean()
 	
 
+data['vertical_speed'] = (-1)*data['vertical_speed']
 plt.figure(1)
 axv = data.plot(kind='line',x='sys_time',y='vertical_speed')
 axhv = data.plot(kind='line',x='sys_time',y='velocity_horizontal[m/s]', ax = axv)
 axhv.set_xlabel('Time [seconds]')
 axhv.set_ylabel('Horizontal/Vertical Speed [m/s]')
-axhv.annotate('Wyjście z samolotu', xy=(48.5,5),  xycoords='data',
+axhv.annotate('Wyjście z samolotu', xy=(48.5,-5),  xycoords='data',
             xytext=(48.5+90,5-8), textcoords='data',
             arrowprops=dict(facecolor='black'),
             horizontalalignment='right', verticalalignment='bottom',
             )
-axhv.annotate('Otwarcie spadochronu', xy=(112,-49),  xycoords='data',
-            xytext=(110+110,-55+20), textcoords='data',
+axhv.annotate('Otwarcie spadochronu', xy=(112,49),  xycoords='data',
+            xytext=(110+110,55), textcoords='data',
             arrowprops=dict(facecolor='black'),
             horizontalalignment='right', verticalalignment='top',
             )
 axhv.annotate('Lądowanie', xy=(251,1),  xycoords='data',
-            xytext=(250-60,0+8), textcoords='data',
+            xytext=(250-50,0-4), textcoords='data',
             arrowprops=dict(facecolor='black'),
             horizontalalignment='left', verticalalignment='top',
             )
@@ -71,6 +72,7 @@ axhv.annotate('Lądowanie', xy=(251,1),  xycoords='data',
 #          head_width=8, head_length=6)
 axhv.plot()
 plt.savefig('ver_hor_speed.png')
+data['vertical_speed'] = (-1)*data['vertical_speed']
 
 
 plt.figure(2)
@@ -95,12 +97,14 @@ ax3.plot()
 
 # Calculatin Cl/Cd ratio
 #data['Cl/Cd_ratio']=data['Cl/Cd_ratio'].rolling(window=100, center=True).mean()
+data['vertical_speed'] = (-1)*data['vertical_speed']
 plt.figure(5)
 #ax.set_title("Skydiver's altitude")
 axhva2 = data.plot(kind='line',x='gps_alt(corr)',y='vertical_speed')
 axhva2.set_xlabel('Altitude [meters]')
 axhva2.set_ylabel('Vertical speed [m/s]')
 axhva2.plot()
+data['vertical_speed'] = (-1)*data['vertical_speed']
 
 #plt.figure(4)
 #ax3 = data.plot(kind='line',x='sys_time',y='gps_lon(corr)')
